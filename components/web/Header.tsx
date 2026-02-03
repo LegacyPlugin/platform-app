@@ -8,11 +8,15 @@ import {
   User,
   Sun,
   ShoppingCart,
-  LogOut
+  LogOut,
+  Trash2
 } from "lucide-react"
+import { useCart } from "@/contexts/CartContext"
 
 // Simples sheet para o carrinho
 function CartSheet({ open, onClose }: { open: boolean; onClose: () => void }) {
+  const { items, removeFromCart, total } = useCart()
+
   if (!open) return null
   return (
     <div className="fixed inset-0 z-40 flex justify-end">
@@ -31,9 +35,38 @@ function CartSheet({ open, onClose }: { open: boolean; onClose: () => void }) {
             ×
           </button>
         </div>
-        <div className="flex-1 p-6 text-zinc-300">
-          <p>Seu carrinho está vazio.</p>
-          {/* Adicione aqui o conteúdo real do carrinho. */}
+        <div className="flex-1 p-6 text-zinc-300 overflow-y-auto space-y-4">
+          {items.length === 0 ? (
+             <p>Seu carrinho está vazio.</p>
+          ) : (
+             items.map(item => (
+                <div key={item.id} className="flex justify-between items-center border-b border-white/5 pb-2">
+                   <div>
+                       <p className="text-white font-medium">{item.name}</p>
+                       <p className="text-sm text-purple-400">R$ {item.price.toFixed(2)}</p>
+                   </div>
+                   <button 
+                     onClick={() => removeFromCart(item.id)}
+                     className="text-zinc-500 hover:text-red-400"
+                   >
+                     <Trash2 size={16} />
+                   </button>
+                </div>
+             ))
+          )}
+        </div>
+        <div className="p-6 border-t border-white/10 space-y-4">
+            <div className="flex justify-between text-white font-bold">
+                <span>Total</span>
+                <span>R$ {total.toFixed(2)}</span>
+            </div>
+            <Link 
+                href="/checkout" 
+                onClick={onClose}
+                className="block w-full bg-purple-600 hover:bg-purple-700 text-white text-center py-3 rounded-lg font-bold transition"
+            >
+                Finalizar Compra
+            </Link>
         </div>
       </aside>
     </div>
@@ -43,6 +76,7 @@ function CartSheet({ open, onClose }: { open: boolean; onClose: () => void }) {
 export function Header() {
   const [cartOpen, setCartOpen] = useState(false)
   const [username, setUsername] = useState<string | null>(null)
+  const { items } = useCart()
 
   useEffect(() => {
     const user = localStorage.getItem("legacy_user")
@@ -105,10 +139,15 @@ export function Header() {
             )}
 
             <button
-              className="hover:text-purple-400 transition"
+              className="hover:text-purple-400 transition relative"
               onClick={() => setCartOpen(true)}
             >
               <ShoppingCart size={18} />
+              {items.length > 0 && (
+                  <span className="absolute -top-2 -right-2 bg-purple-600 text-white text-[10px] w-4 h-4 flex items-center justify-center rounded-full">
+                      {items.length}
+                  </span>
+              )}
             </button>
           </div>
 
@@ -131,10 +170,15 @@ export function Header() {
             )}
 
             <button
-              className="p-2 hover:text-purple-400 transition"
+              className="p-2 hover:text-purple-400 transition relative"
               onClick={() => setCartOpen(true)}
             >
               <ShoppingCart size={18} />
+              {items.length > 0 && (
+                  <span className="absolute top-0 right-0 bg-purple-600 text-white text-[10px] w-4 h-4 flex items-center justify-center rounded-full">
+                      {items.length}
+                  </span>
+              )}
             </button>
           </div>
         </div>

@@ -57,7 +57,7 @@ export default function Hero() {
           </div>
 
           {/* RIGHT (Imagem) */}
-          <div className="relative flex items-center justify-center w-full">
+          <div className="hidden lg:flex relative items-center justify-center w-full">
             {/* Imagem temática Minecraft plugin loja */}
             <div className="absolute right-0 top-0 h-full w-full flex items-center justify-center">
               <div className="relative w-full flex items-center justify-center">

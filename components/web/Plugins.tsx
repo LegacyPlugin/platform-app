@@ -24,13 +24,17 @@ type CategoryKey =
 
 type SortKey = "recentes" | "todos"
 
+import { useCart } from "@/contexts/CartContext"
+
 type PluginItem = {
   id: string
+  identifier: string
   name: string
   price: number
   category: Exclude<CategoryKey, "all">
   image: string
   createdAt: string
+  original: Plugin
 }
 
 const CATEGORIES: {
@@ -85,11 +89,13 @@ export function PluginsSection() {
       .then((data: Plugin[]) => {
         const mappedItems: PluginItem[] = data.map(p => ({
           id: p.id.toString(),
+          identifier: p.identifier,
           name: p.name,
           price: p.price,
           category: guessCategory(p.name),
           image: p.imageUrls && p.imageUrls.length > 0 ? p.imageUrls[0] : "/plugin.svg",
-          createdAt: new Date().toISOString() 
+          createdAt: new Date().toISOString(),
+          original: p
         }))
         setItems(mappedItems)
       })
