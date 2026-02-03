@@ -4,6 +4,7 @@ import React, { useEffect, useState } from "react"
 import { Plugin } from "@/lib/types"
 import { Search, Plus, Package, Edit, Trash2 } from "lucide-react"
 import Link from "next/link"
+import { toast } from "sonner"  
 
 export default function AdminPluginsPage() {
     const [plugins, setPlugins] = useState<Plugin[]>([])
@@ -42,12 +43,13 @@ export default function AdminPluginsPage() {
 
             if (res.ok) {
                 setPlugins(plugins.filter(p => p.id !== id))
+                toast.success("Plugin excluído com sucesso!")
             } else {
-                alert("Erro ao excluir plugin.")
+                toast.error("Erro ao excluir plugin.")
             }
         } catch (e) {
             console.error(e)
-            alert("Erro de conexão.")
+            toast.error("Erro de conexão.")
         }
     }
 
