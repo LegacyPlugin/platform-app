@@ -4,7 +4,7 @@ import React from "react"
 import { useCart } from "@/contexts/CartContext"
 import { Header } from "@/components/web/Header"
 import { Footer } from "@/components/web/Footer"
-import { Trash2, ShoppingCart, CreditCard, ArrowLeft } from "lucide-react"
+import { Trash2, ShoppingCart, CreditCard, ArrowLeft, Shield } from "lucide-react"
 import Link from "next/link"
 
 export default function CheckoutPage() {
