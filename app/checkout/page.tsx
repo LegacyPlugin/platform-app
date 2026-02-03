@@ -7,6 +7,7 @@ import { ArrowLeft, Trash2, CreditCard, Loader2, QrCode, Check, Copy, X } from "
 import Link from "next/link"
 import { Button } from "@/components/ui/button"
 import Image from "next/image"
+import { QRCodeCanvas } from "qrcode.react"
 
 export default function CheckoutPage() {
   const { items, removeFromCart, total, clearCart } = useCart()
@@ -21,7 +22,6 @@ export default function CheckoutPage() {
   })
   const [error, setError] = useState<string | null>(null)
   
-  // State for Pix Modal
   const [pixData, setPixData] = useState<{
     qrCode: string
     copyPaste: string
@@ -29,7 +29,6 @@ export default function CheckoutPage() {
   } | null>(null)
 
   useEffect(() => {
-    // Tentar preencher com dados do usuário logado se houver
     const userStr = localStorage.getItem("legacy_user")
   }, [])
 
@@ -78,7 +77,6 @@ export default function CheckoutPage() {
                 copyPaste: data.pixCopyPaste,
                 transactionId: data.preferenceId
             })
-            // clearCart() // Optionally clear cart here or after payment confirmation
         } else if (data.paymentUrl) {
             window.location.href = data.paymentUrl
         } else {
@@ -282,12 +280,11 @@ export default function CheckoutPage() {
 
                             <div className="flex justify-center py-4">
                                 <div className="bg-white p-2 rounded-xl shadow-lg border border-zinc-100">
-                                    {/* Using a simple img tag for the QR Code URL we get from backend (Google Charts) */}
-                                    {/* Alternatively, use a QR code library if the backend returns raw string */}
-                                    <img 
-                                        src={pixData.qrCode} 
-                                        alt="QR Code Pix" 
-                                        className="w-64 h-64 object-contain"
+                                    <QRCodeCanvas 
+                                        value={pixData.copyPaste}
+                                        size={256}
+                                        level="H"
+                                        className="w-64 h-64"
                                     />
                                 </div>
                             </div>
