@@ -3,9 +3,10 @@
 import React, { useState, useEffect } from "react"
 import { useCart } from "@/contexts/CartContext"
 import { useRouter } from "next/navigation"
-import { ArrowLeft, Trash2, CreditCard, Loader2, QrCode } from "lucide-react"
+import { ArrowLeft, Trash2, CreditCard, Loader2, QrCode, Check, Copy, X } from "lucide-react"
 import Link from "next/link"
 import { Button } from "@/components/ui/button"
+import Image from "next/image"
 
 export default function CheckoutPage() {
   const { items, removeFromCart, total, clearCart } = useCart()
@@ -19,17 +20,17 @@ export default function CheckoutPage() {
     document: ""
   })
   const [error, setError] = useState<string | null>(null)
+  
+  // State for Pix Modal
+  const [pixData, setPixData] = useState<{
+    qrCode: string
+    copyPaste: string
+    transactionId: string
+  } | null>(null)
 
   useEffect(() => {
     // Tentar preencher com dados do usuário logado se houver
     const userStr = localStorage.getItem("legacy_user")
-    // O localStorage 'legacy_user' salva apenas o username/email como string ou objeto?
-    // Baseado no Header.tsx: const user = localStorage.getItem("legacy_user") -> setUsername(user)
-    // Parece ser apenas o username (string).
-    // O token está em 'legacy_token'.
-    // Idealmente teríamos um endpoint /me para pegar os dados completos.
-    
-    // Por enquanto deixamos em branco para o usuário preencher
   }, [])
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -71,15 +72,17 @@ export default function CheckoutPage() {
 
         const data = await res.json()
         
-        if (data.paymentUrl) {
-            // Limpar carrinho pois o pedido foi gerado? 
-            // Talvez só limpar se o pagamento for confirmado. 
-            // Mas para UX, podemos limpar ou manter até ele voltar.
-            // Vamos manter por segurança, ou limpar se ele for redirecionado com sucesso.
-            // clearCart() 
+        if (data.pixQrCode && data.pixCopyPaste) {
+            setPixData({
+                qrCode: data.pixQrCode,
+                copyPaste: data.pixCopyPaste,
+                transactionId: data.preferenceId
+            })
+            // clearCart() // Optionally clear cart here or after payment confirmation
+        } else if (data.paymentUrl) {
             window.location.href = data.paymentUrl
         } else {
-            throw new Error("URL de pagamento não retornada.")
+            throw new Error("Dados de pagamento não retornados.")
         }
 
     } catch (err: any) {
@@ -89,7 +92,19 @@ export default function CheckoutPage() {
     }
   }
 
-  if (items.length === 0) {
+  const copyToClipboard = () => {
+      if (pixData?.copyPaste) {
+          navigator.clipboard.writeText(pixData.copyPaste)
+          alert("Código Pix copiado!")
+      }
+  }
+
+  const handleFinish = () => {
+      clearCart()
+      router.push("/dashboard") // Or success page
+  }
+
+  if (items.length === 0 && !pixData) {
     return (
         <div className="min-h-screen bg-black text-white flex flex-col items-center justify-center p-4">
             <div className="text-center space-y-4">
@@ -245,6 +260,60 @@ export default function CheckoutPage() {
                     </div>
                 </div>
             </div>
+
+            {/* Pix Modal Overlay */}
+            {pixData && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm p-4">
+                    <div className="bg-white text-black rounded-3xl p-8 max-w-md w-full shadow-2xl relative animate-in fade-in zoom-in duration-300">
+                        <button 
+                            onClick={() => setPixData(null)}
+                            className="absolute top-4 right-4 text-zinc-400 hover:text-zinc-600"
+                        >
+                            <X size={24} />
+                        </button>
+
+                        <div className="text-center space-y-6">
+                            <div className="space-y-2">
+                                <h2 className="text-3xl font-extrabold text-black">Falta pouco!</h2>
+                                <p className="text-zinc-600 font-medium">
+                                    Efetue o pagamento via <span className="font-bold text-black">PIX</span> de {items.length} produto(s) por <span className="font-bold text-black">R$ {total.toFixed(2)}</span>
+                                </p>
+                            </div>
+
+                            <div className="flex justify-center py-4">
+                                <div className="bg-white p-2 rounded-xl shadow-lg border border-zinc-100">
+                                    {/* Using a simple img tag for the QR Code URL we get from backend (Google Charts) */}
+                                    {/* Alternatively, use a QR code library if the backend returns raw string */}
+                                    <img 
+                                        src={pixData.qrCode} 
+                                        alt="QR Code Pix" 
+                                        className="w-64 h-64 object-contain"
+                                    />
+                                </div>
+                            </div>
+
+                            <div className="space-y-3">
+                                <Button 
+                                    onClick={copyToClipboard}
+                                    className="w-full bg-[#4c1d95] hover:bg-[#5b21b6] text-white font-bold py-6 text-lg rounded-xl shadow-lg shadow-purple-900/20 active:scale-95 transition-all"
+                                >
+                                    <Copy className="mr-2" size={20} />
+                                    Copiar Pix
+                                </Button>
+                                
+                                <Button 
+                                    onClick={handleFinish}
+                                    variant="outline"
+                                    className="w-full border-2 border-[#2563eb] text-[#2563eb] hover:bg-[#2563eb] hover:text-white font-bold py-6 text-lg rounded-xl transition-all"
+                                >
+                                    <Check className="mr-2" size={20} />
+                                    Marcar como concluído
+                                </Button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            )}
         </div>
     </div>
   )
