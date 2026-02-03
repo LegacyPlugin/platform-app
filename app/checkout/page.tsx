@@ -28,6 +28,12 @@ export default function CheckoutPage() {
     transactionId: string
   } | null>(null)
 
+  const [verifying, setVerifying] = useState(false)
+  const [successData, setSuccessData] = useState<{
+    licenseKey: string
+    message: string
+  } | null>(null)
+
   useEffect(() => {
     const userStr = localStorage.getItem("legacy_user")
   }, [])
@@ -97,9 +103,39 @@ export default function CheckoutPage() {
       }
   }
 
-  const handleFinish = () => {
-      clearCart()
-      router.push("/dashboard") // Or success page
+  const handleVerifyPayment = async () => {
+      if (!pixData?.transactionId) return
+
+      setVerifying(true)
+      try {
+          const res = await fetch("/api/v1/gateway/purchase", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({
+                  transactionId: pixData.transactionId,
+                  customerName: formData.customerName,
+                  email: formData.email,
+                  pluginIdentifiers: items.map(p => p.identifier)
+              })
+          })
+          
+          const data = await res.json()
+          
+          if (data.status === "Sucesso" || data.status === "SUCCESS") {
+              setSuccessData({
+                  licenseKey: data.licenseKey,
+                  message: data.message
+              })
+              clearCart()
+          } else {
+              alert("Pagamento ainda não confirmado. Aguarde alguns instantes e tente novamente.")
+          }
+      } catch (error) {
+          console.error(error)
+          alert("Erro ao verificar pagamento.")
+      } finally {
+          setVerifying(false)
+      }
   }
 
   if (items.length === 0 && !pixData) {
@@ -259,8 +295,55 @@ export default function CheckoutPage() {
                 </div>
             </div>
 
+            {/* Success Modal Overlay */}
+            {successData && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm p-4">
+                    <div className="bg-white text-black rounded-3xl p-8 max-w-md w-full shadow-2xl relative animate-in fade-in zoom-in duration-300">
+                        <button 
+                            onClick={() => {
+                                setSuccessData(null)
+                                setPixData(null)
+                                router.push("/dashboard")
+                            }}
+                            className="absolute top-4 right-4 text-zinc-400 hover:text-zinc-600"
+                        >
+                            <X size={24} />
+                        </button>
+
+                        <div className="text-center space-y-6">
+                            <div className="flex justify-center mb-4">
+                                <div className="bg-green-100 p-4 rounded-full">
+                                    <Check className="text-green-600 w-12 h-12" />
+                                </div>
+                            </div>
+                            
+                            <div className="space-y-2">
+                                <h2 className="text-3xl font-extrabold text-black">Pagamento Aprovado!</h2>
+                                <p className="text-zinc-600 font-medium">
+                                    Sua licença foi gerada com sucesso.
+                                </p>
+                            </div>
+
+                            <div className="bg-zinc-100 p-4 rounded-xl border border-zinc-200">
+                                <p className="text-sm text-zinc-500 mb-2">Sua Chave de Licença:</p>
+                                <code className="block bg-white p-3 rounded-lg border border-zinc-200 text-lg font-mono font-bold text-purple-600 break-all">
+                                    {successData.licenseKey}
+                                </code>
+                            </div>
+
+                            <Button 
+                                onClick={() => router.push("/dashboard")}
+                                className="w-full bg-green-600 hover:bg-green-700 text-white font-bold py-6 text-lg rounded-xl shadow-lg shadow-green-900/20 active:scale-95 transition-all"
+                            >
+                                Ir para o Dashboard
+                            </Button>
+                        </div>
+                    </div>
+                </div>
+            )}
+
             {/* Pix Modal Overlay */}
-            {pixData && (
+            {pixData && !successData && (
                 <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm p-4">
                     <div className="bg-white text-black rounded-3xl p-8 max-w-md w-full shadow-2xl relative animate-in fade-in zoom-in duration-300">
                         <button 
@@ -299,12 +382,22 @@ export default function CheckoutPage() {
                                 </Button>
                                 
                                 <Button 
-                                    onClick={handleFinish}
+                                    onClick={handleVerifyPayment}
+                                    disabled={verifying}
                                     variant="outline"
                                     className="w-full border-2 border-[#2563eb] text-[#2563eb] hover:bg-[#2563eb] hover:text-white font-bold py-6 text-lg rounded-xl transition-all"
                                 >
-                                    <Check className="mr-2" size={20} />
-                                    Marcar como concluído
+                                    {verifying ? (
+                                        <>
+                                            <Loader2 className="animate-spin mr-2" size={20} />
+                                            Verificando...
+                                        </>
+                                    ) : (
+                                        <>
+                                            <Check className="mr-2" size={20} />
+                                            Já realizei o pagamento
+                                        </>
+                                    )}
                                 </Button>
                             </div>
                         </div>

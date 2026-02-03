@@ -13,7 +13,6 @@ import {
   Filter,
 } from "lucide-react"
 import { Plugin } from "@/lib/types"
-import { useRouter } from "next/navigation"
 
 type CategoryKey =
   | "all"
@@ -83,8 +82,6 @@ export function PluginsSection() {
   const [activeCat, setActiveCat] = React.useState<CategoryKey>("all")
   const [sort, setSort] = React.useState<SortKey>("todos")
   const [items, setItems] = useState<PluginItem[]>([])
-  const { addToCart } = useCart()
-  const router = useRouter()
 
   useEffect(() => {
     fetch('/api/v1/store/plugins')
@@ -229,10 +226,7 @@ export function PluginsSection() {
 
               {/* botão comprar */}
               <button
-                onClick={() => {
-                  addToCart(p.original)
-                  router.push("/checkout")
-                }}
+                onClick={() => console.log("comprar", p.id)}
                 className={[
                   "mt-6 w-full rounded-xl bg-purple-500 py-3",
                   "flex items-center justify-center gap-2",
