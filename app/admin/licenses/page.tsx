@@ -255,7 +255,7 @@ export default function AdminLicensesPage() {
                                             onClick={(e) => {
                                                 e.stopPropagation()
                                                 const rect = e.currentTarget.getBoundingClientRect()
-                                                setMenuPos({ top: rect.bottom + 8, left: rect.right - 192 })
+                                                setMenuPos({ top: rect.bottom + 8 + window.scrollY, left: rect.right - 192 + window.scrollX })
                                                 setOpenMenuId(openMenuId === license.id ? null : license.id)
                                             }}
                                             className={`p-2 rounded-lg transition ${openMenuId === license.id ? 'bg-white/10 text-white' : 'text-zinc-400 hover:bg-white/10 hover:text-white'}`}
