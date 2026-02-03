@@ -25,6 +25,7 @@ type CategoryKey =
 type SortKey = "recentes" | "todos"
 
 import { useCart } from "@/contexts/CartContext"
+import { useRouter } from "next/navigation"
 
 type PluginItem = {
   id: string
@@ -79,6 +80,8 @@ function guessCategory(name: string): Exclude<CategoryKey, "all"> {
 }
 
 export function PluginsSection() {
+  const router = useRouter()
+  const { addToCart } = useCart()
   const [activeCat, setActiveCat] = React.useState<CategoryKey>("all")
   const [sort, setSort] = React.useState<SortKey>("todos")
   const [items, setItems] = useState<PluginItem[]>([])
@@ -226,7 +229,10 @@ export function PluginsSection() {
 
               {/* botão comprar */}
               <button
-                onClick={() => console.log("comprar", p.id)}
+                onClick={() => {
+                  addToCart(p.original)
+                  router.push("/checkout")
+                }}
                 className={[
                   "mt-6 w-full rounded-xl bg-purple-500 py-3",
                   "flex items-center justify-center gap-2",
