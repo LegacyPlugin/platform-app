@@ -4,7 +4,7 @@ import React, { useState } from "react"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
 import { User, Lock, Loader2, ArrowLeft } from "lucide-react"
-import { LoginRequest, AuthResponse } from "@/lib/types"
+import { LoginRequest, AuthResponse, ClientProfileResponse } from "@/lib/types"
 
 export default function LoginPage() {
   const router = useRouter()
@@ -40,13 +40,28 @@ export default function LoginPage() {
       
       // Save token
       localStorage.setItem("legacy_token", data.token)
-      localStorage.setItem("legacy_user", username)
       
-      // Dispatch event for header update (if needed, though page reload handles it)
-      // Since we are navigating, the header on the new page will read from localStorage
-      window.dispatchEvent(new Event("storage"))
-      
-      router.push("/")
+      // Fetch user profile to get role and other details
+      const profileRes = await fetch("/api/v1/client/profile", {
+        headers: { Authorization: `Bearer ${data.token}` }
+      })
+
+      if (profileRes.ok) {
+        const profile: ClientProfileResponse = await profileRes.json()
+        localStorage.setItem("legacy_user", JSON.stringify(profile))
+        
+        window.dispatchEvent(new Event("storage"))
+        
+        if (profile.role === "ADMIN") {
+          router.push("/admin")
+        } else {
+          router.push("/")
+        }
+      } else {
+         // Fallback if profile fetch fails
+         console.error("Failed to fetch profile")
+         throw new Error("Erro ao carregar perfil do usuário")
+      }
       
     } catch (err: any) {
       setError(err.message || "Ocorreu um erro. Tente novamente.")

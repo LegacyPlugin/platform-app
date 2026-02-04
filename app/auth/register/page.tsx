@@ -4,7 +4,7 @@ import React, { useState } from "react"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
 import { User, Lock, Loader2, ArrowLeft, Mail } from "lucide-react"
-import { RegisterRequest, AuthResponse } from "@/lib/types"
+import { RegisterRequest, AuthResponse, ClientProfileResponse } from "@/lib/types"
 
 export default function RegisterPage() {
   const router = useRouter()
@@ -42,12 +42,27 @@ export default function RegisterPage() {
       
       // Save token
       localStorage.setItem("legacy_token", data.token)
-      localStorage.setItem("legacy_user", username)
       
-      // Dispatch event
-      window.dispatchEvent(new Event("storage"))
-      
-      router.push("/")
+      // Fetch user profile
+      const profileRes = await fetch("/api/v1/client/profile", {
+        headers: { Authorization: `Bearer ${data.token}` }
+      })
+
+      if (profileRes.ok) {
+        const profile: ClientProfileResponse = await profileRes.json()
+        localStorage.setItem("legacy_user", JSON.stringify(profile))
+        
+        window.dispatchEvent(new Event("storage"))
+        
+        // Registering users are typically not ADMIN, but let's check anyway or just go to home
+        if (profile.role === "ADMIN") {
+          router.push("/admin")
+        } else {
+          router.push("/")
+        }
+      } else {
+         throw new Error("Erro ao carregar perfil do usuário")
+      }
       
     } catch (err: any) {
       setError(err.message || "Ocorreu um erro. Tente novamente.")
