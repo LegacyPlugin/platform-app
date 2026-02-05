@@ -36,6 +36,21 @@ export default function CheckoutPage() {
 
   useEffect(() => {
     const userStr = localStorage.getItem("legacy_user")
+    if (userStr) {
+        try {
+            const user = JSON.parse(userStr)
+            setFormData(prev => ({
+                ...prev,
+                customerName: user.username || "", // Best guess if name is not in profile
+                email: user.email || ""
+            }))
+        } catch (e) {
+            // Legacy string format or invalid json
+            if (typeof userStr === "string" && !userStr.startsWith("{")) {
+                setFormData(prev => ({ ...prev, customerName: userStr }))
+            }
+        }
+    }
   }, [])
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -54,25 +69,32 @@ export default function CheckoutPage() {
     }
 
     try {
+        const token = localStorage.getItem("legacy_token")
+        const headers: HeadersInit = {
+            "Content-Type": "application/json"
+        }
+        if (token) {
+            headers["Authorization"] = `Bearer ${token}`
+        }
+
         const payload = {
             customerName: formData.customerName,
             email: formData.email,
-            document: formData.document,
+            document: formData.document.replace(/\D/g, ""), // Remove non-digits
             couponCode: coupon,
             pluginIdentifiers: items.map(p => p.identifier)
         }
 
         const res = await fetch("/api/v1/gateway/checkout", {
             method: "POST",
-            headers: {
-                "Content-Type": "application/json"
-            },
+            headers,
             body: JSON.stringify(payload)
         })
 
         if (!res.ok) {
             const errData = await res.json().catch(() => ({}))
-            throw new Error(errData.message || "Erro ao processar checkout")
+            console.error("Checkout error:", errData)
+            throw new Error(errData.message || `Erro ao processar checkout (${res.status})`)
         }
 
         const data = await res.json()
