@@ -41,11 +41,10 @@ export default function CheckoutPage() {
             const user = JSON.parse(userStr)
             setFormData(prev => ({
                 ...prev,
-                customerName: user.username || "", // Best guess if name is not in profile
+                customerName: user.username || "",
                 email: user.email || ""
             }))
         } catch (e) {
-            // Legacy string format or invalid json
             if (typeof userStr === "string" && !userStr.startsWith("{")) {
                 setFormData(prev => ({ ...prev, customerName: userStr }))
             }
@@ -77,12 +76,15 @@ export default function CheckoutPage() {
             headers["Authorization"] = `Bearer ${token}`
         }
 
-        const payload = {
+        const payload: any = {
             customerName: formData.customerName,
             email: formData.email,
-            document: formData.document.replace(/\D/g, ""), // Remove non-digits
-            couponCode: coupon,
+            document: formData.document.replace(/\D/g, ""),
             pluginIdentifiers: items.map(p => p.identifier)
+        }
+
+        if (coupon && coupon.trim().length > 0) {
+            payload.couponCode = coupon.trim()
         }
 
         const res = await fetch("/api/v1/gateway/checkout", {
@@ -92,9 +94,20 @@ export default function CheckoutPage() {
         })
 
         if (!res.ok) {
-            const errData = await res.json().catch(() => ({}))
-            console.error("Checkout error:", errData)
-            throw new Error(errData.message || `Erro ao processar checkout (${res.status})`)
+            let errorMessage = `Erro ao processar checkout (${res.status})`
+            try {
+                const errData = await res.json()
+                console.error("Checkout error data:", errData)
+                errorMessage = errData.message || errData.error || errorMessage
+            } catch (e) {
+                const text = await res.text().catch(() => null)
+                console.error("Checkout error text:", text)
+                if (text) {
+                     const cleanText = text.replace(/<[^>]*>/g, '').slice(0, 100)
+                     errorMessage = `Erro: ${cleanText}`
+                }
+            }
+            throw new Error(errorMessage)
         }
 
         const data = await res.json()

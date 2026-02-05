@@ -180,7 +180,7 @@
         <header className="border-b border-white/5 bg-[#121212]">
             <div className="max-w-7xl mx-auto px-4 h-16 flex items-center justify-between">
             <Link href="/">
-                <img src="/logo.png" alt="Legacy" className="h-8 w-auto object-contain" />
+                <img src="/logo.png" alt="Lothus" className="h-8 w-auto object-contain" />
             </Link>
             <div className="flex items-center gap-4">
                 <span className="text-sm font-medium text-purple-400 hidden sm:block">
