@@ -129,6 +129,14 @@ export function PluginsSection() {
       )
     }
 
+    list.sort((a, b) => {
+        const isA = a.name.toLowerCase().includes("lothusloader") || a.identifier.toLowerCase().includes("lothusloader")
+        const isB = b.name.toLowerCase().includes("lothusloader") || b.identifier.toLowerCase().includes("lothusloader")
+        if (isA && !isB) return -1
+        if (!isA && isB) return 1
+        return 0
+    })
+
     return list
   }, [items, activeCat, sort])
 
@@ -199,22 +207,36 @@ export function PluginsSection() {
 
         {/* Grid de plugins */}
         <div className="mt-8 grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4">
-          {filtered.map((p) => (
+          {filtered.map((p) => {
+            const isLoader = p.name.toLowerCase().includes("lothusloader") || p.identifier.toLowerCase().includes("lothusloader")
+            
+            return (
             <div
               key={p.id}
               className={[
-                "rounded-3xl bg-[#121212] p-6",
+                "rounded-3xl bg-[#121212] p-6 relative overflow-hidden group",
                 "shadow-[0_16px_40px_rgba(0,0,0,0.28)]",
-                "border border-white/5",
+                isLoader 
+                    ? "border-2 border-purple-500/50 shadow-[0_0_40px_rgba(168,85,247,0.15)]" 
+                    : "border border-white/5",
               ].join(" ")}
             >
+              {isLoader && (
+                  <div className="absolute top-0 right-0 bg-purple-600 text-white text-[10px] font-bold px-3 py-1 rounded-bl-xl uppercase tracking-wider z-10">
+                      Dependência
+                  </div>
+              )}
+
               {/* imagem */}
               <div className="flex justify-center pt-2">
-                <div className="grid h-20 w-20 place-items-center">
+                <div className="grid h-20 w-20 place-items-center relative">
+                  {isLoader && (
+                      <div className="absolute inset-0 bg-purple-500/30 blur-2xl rounded-full animate-pulse" />
+                  )}
                   <img
                     src={p.image}
                     alt={p.name}
-                    className="h-16 w-16 object-contain drop-shadow-[0_10px_30px_rgba(0,0,0,0.45)]"
+                    className="h-16 w-16 object-contain drop-shadow-[0_10px_30px_rgba(0,0,0,0.45)] relative z-10"
                     draggable={false}
                   />
                 </div>
