@@ -79,12 +79,28 @@ export function Header() {
   const { items } = useCart()
 
   useEffect(() => {
-    const user = localStorage.getItem("legacy_user")
-    if (user) setUsername(user)
+    const updateUser = () => {
+      const userStr = localStorage.getItem("legacy_user")
+      if (userStr) {
+        try {
+          const userObj = JSON.parse(userStr)
+          if (userObj && typeof userObj === 'object' && userObj.username) {
+            setUsername(userObj.username)
+          } else {
+            setUsername(userStr)
+          }
+        } catch (e) {
+          setUsername(userStr)
+        }
+      } else {
+        setUsername(null)
+      }
+    }
+
+    updateUser()
 
     const handleStorage = () => {
-      const user = localStorage.getItem("legacy_user")
-      setUsername(user)
+      updateUser()
     }
     window.addEventListener("storage", handleStorage)
     return () => window.removeEventListener("storage", handleStorage)

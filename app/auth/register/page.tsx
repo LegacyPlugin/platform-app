@@ -44,7 +44,7 @@ export default function RegisterPage() {
       localStorage.setItem("legacy_token", data.token)
       
       // Fetch user profile
-      const profileRes = await fetch("/api/v1/client/profile", {
+      const profileRes = await fetch("/api/v1/client/me", {
         headers: { Authorization: `Bearer ${data.token}` }
       })
 
